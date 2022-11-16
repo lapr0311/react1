@@ -1,23 +1,58 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import Navbar from "./Navbar";
+import SearchBar from "./SearchBar";
+import PokemonTable from "./PokemonTable";
+import { getPokemons, getPokemosData , } from "./miApi";
+
+
 
 function App() {
+  const [pokemons, setPokemos] = useState([]);
+  const [pokemonTable, setPokemonTable] = useState([])
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true)
+
+
+  const fetchPokemons = async () => {
+
+    try {
+
+      setLoading(true)
+      const data = await getPokemons(200, 200 * page);
+      const promises = data.results.map(async (pokemon) => {
+        return await getPokemosData(pokemon.url)
+      });
+
+      const results = await Promise.all(promises)
+      setPokemos(results);
+      setLoading(false)
+      setPokemonTable(results)
+      setTotal(Math.ceil(data.count / 200))
+    } catch (err) { }
+  }
+
+  useEffect(() => {
+    fetchPokemons();
+  }, [page])
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div >
+      <Navbar />
+      <div>
+        <SearchBar
+          pokemonTable={pokemonTable}
+          setPokemos={setPokemos}
+          
+        />
+        <PokemonTable
+          pokemons={pokemons}
+          page={page}
+          setPage={setPage}
+          total={total}
+          loading={loading}
+        />
+      </div>
     </div>
   );
 }
